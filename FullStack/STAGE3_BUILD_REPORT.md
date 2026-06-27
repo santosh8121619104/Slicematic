@@ -18,18 +18,26 @@ The Stage 3 rubric was mapped against the implementation: Vercel-ready frontend,
 
 The app in `FullStack` is now a Next.js full-stack application with:
 
+- Separate customer, admin, and AI workspaces
+- Application-grade admin auth screens for login, logout, forgot password, and reset password
 - Customer ordering journey
 - AI recommendation step
+- AI cart strategist
+- AI menu copywriter
+- AI operations briefing
 - Menu browsing and pizza customization
 - Cart and checkout
 - Final itemized bill
 - Order confirmation and tracking view
 - Admin dashboard
+- Admin menu lifecycle studio
 - Supabase-ready backend schema
 - API routes for menu, orders, admin analytics, CSV export, and AI recommendation
 - ML/demand forecast artifact using scikit-learn
 
 The old static prototype files were removed so the folder now clearly represents the production Stage 3 application.
+
+The latest UI pass changed the app shell from a long stacked page into workspace navigation. Customer app, Admin console, and AI lab are mutually exclusive application modes: opening Admin removes the customer order/cart view, and opening Customer removes the admin dashboard. This is the key product-structure change that prevents the project from reviewing like a single giant form.
 
 ## End-Customer Flow
 
@@ -46,6 +54,8 @@ The customer journey is intentionally step-based and gated:
 9. Customer sees tracking plus a final structured bill.
 
 This prevents the app from behaving like a loose form. The flow feels like a delivery product: intake, recommendation, customization, checkout, confirmation, operations.
+
+The admin side is a separate control room, not a continuation of the checkout form. It covers order analytics, menu lifecycle, AI operations, settings, and export workflows.
 
 ## UI And Aesthetic Decisions
 
@@ -125,6 +135,28 @@ API routes:
   - Logs recommendation events in Supabase when configured.
   - Falls back safely when no key/rate-limit/error occurs.
 
+- `POST /api/ai/cart-insight`
+  - Reads the active cart, menu, bill totals, discount threshold, and delivery context.
+  - Returns one practical cart improvement, discount cue, pairing, or checkout reassurance.
+  - Uses OpenRouter with deterministic fallback.
+
+- `POST /api/ai/menu-copy`
+  - Generates admin menu descriptions, badges, tags, prep time, and merchandising notes.
+  - Supports pizzas, bases, and toppings.
+  - Helps launch new catalogue items consistently.
+
+- `GET /api/ai/ops-briefing`
+  - Reads revenue, AOV, top pizza, busiest hour, payment mix, hourly demand, and forecast.
+  - Returns shift briefing, staffing cue, prep list, revenue watch, and prioritized actions.
+  - Requires admin auth when Supabase admin env is configured.
+
+- `POST /api/admin/menu`
+  - Creates new pizzas, bases, or toppings from the admin dashboard.
+  - Requires Supabase Auth when Supabase admin env is configured.
+  - Generates the next menu code/id.
+  - Persists to `pizza_types`, `pizza_bases`, or `toppings`.
+  - Supports local demo creation when credentials are not configured.
+
 Important backend files:
 
 - `lib/pricing.ts`
@@ -177,9 +209,14 @@ Additional schema qualities:
 
 Admin features built:
 
-- Admin login.
+- Admin login screen.
+- Admin logout action.
+- Forgot password screen.
+- Reset password screen.
 - Supabase Auth login when env keys exist.
+- Supabase password recovery when env keys exist.
 - Demo login for local review.
+- Demo password reset fallback for local review.
 - Revenue summary.
 - Order count.
 - Average order value.
@@ -194,10 +231,14 @@ Admin features built:
 - Demand forecast chart.
 - Top 3 forecast peak windows.
 - Menu editor for pizzas, bases, and toppings.
+- Menu lifecycle studio for adding brand-new pizzas, crusts, and toppings.
 - Availability toggles.
 - Price/name editing.
 - Brand/outlet/hero copy editing.
 - AI feature explanation panel.
+- AI cart strategist in customer cart.
+- AI menu copywriter in admin menu lifecycle.
+- AI operations briefing in admin overview.
 
 The admin view is intentionally dense and operations-focused so it feels like a real restaurant control room.
 
@@ -294,6 +335,15 @@ Verified API behavior:
 
 Verified browser behavior:
 
+- Customer workspace and admin workspace are mutually exclusive.
+- Admin console does not show customer cart/order panels.
+- AI lab opens as an admin workspace tab, not as another customer form section.
+- Admin login screen renders as a separate application access module.
+- Forgot password screen renders.
+- Reset password screen renders.
+- Demo reset updates the local demo password.
+- Admin sign-in opens the dashboard shell.
+- Admin logout returns to the auth module.
 - Menu hidden before intake.
 - Clicking Menu before valid intake keeps user on intake.
 - Specific toast appears for incomplete intake.
@@ -331,6 +381,10 @@ Verified browser behavior:
 - `app/api/menu/route.ts`
 - `app/api/orders/route.ts`
 - `app/api/admin/orders/route.ts`
+- `app/api/admin/menu/route.ts`
+- `app/api/ai/cart-insight/route.ts`
+- `app/api/ai/menu-copy/route.ts`
+- `app/api/ai/ops-briefing/route.ts`
 - `app/api/recommend/route.ts`
 - `supabase/schema.sql`
 - `scripts/forecast_model.py`
@@ -343,6 +397,7 @@ Verified browser behavior:
 For application reviewers:
 
 - It is not a one-form UI.
+- It has login, logout, forgot password, and reset password screens.
 - It has a believable end-to-end customer journey.
 - It has operational admin screens.
 - It preserves business logic.
